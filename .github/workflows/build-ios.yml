@@ -11,9 +11,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: yarn
+      # Устанавливаем Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
+      # Ставим Yarn classic
+      - name: Install Yarn classic
+        run: |
+          npm install -g yarn@1
+
+      - name: Install JS dependencies
+        run: yarn install --frozen-lockfile
+
+      # Устанавливаем pods
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      # Сборка iOS
       - name: Build iOS
         run: |
           cd ios
@@ -25,6 +43,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -derivedDataPath build
 
+      # Создание IPA
       - name: Create IPA
         run: |
           mkdir Payload
