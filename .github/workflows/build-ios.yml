@@ -5,46 +5,55 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
+      # Клонируем репозиторий
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: yarn
 
-      # Использует Yarn из проекта (.yarnrc.yml)
-      - name: Install dependencies
-        run: corepack enable && yarn install --immutable
+      # Включаем Corepack (для Yarn Berry)
+      - name: Enable Corepack
+        run: corepack enable
 
-      - name: Install CocoaPods
+      # Установка зависимостей RN
+      - name: Install JS dependencies
+        run: yarn install
+
+      # Установка CocoaPods
+      - name: Install Pods
         run: |
           cd ios
           pod install
 
-      - name: Build iOS
+      # Сборка приложения
+      - name: Build iOS app
         run: |
           cd ios
           xcodebuild \
-            -workspace *.xcworkspace \
+            -workspace Todorant.xcworkspace \
             -scheme Todorant \
-            -sdk iphoneos \
             -configuration Release \
+            -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             -derivedDataPath build
 
+      # Создание IPA
       - name: Create IPA
         run: |
           mkdir Payload
-          cp -R ios/build/Build/Products/Release-iphoneos/*.app Payload/
-          zip -r app.ipa Payload
+          cp -R ios/build/Build/Products/Release-iphoneos/Todorant.app Payload/
+          zip -r Todorant.ipa Payload
 
+      # Загрузка артефакта
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ipa
-          path: app.ipa
+          name: Todorant-ipa
+          path: Todorant.ipa
